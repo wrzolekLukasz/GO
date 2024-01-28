@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"strings"
 )
 
 func main() {
@@ -25,10 +26,18 @@ func sha1Sum(fileName string) (string, error) {
 	}
 	defer file.Close() // defer is used to execute the function after the surrounding function returns
 	// defer is used to close the file after the function returns, usually used to close the file or file handling
-	r, err := gzip.NewReader(file)
-	if err != nil {
-		return "", err
+
+	var r io.Reader = file
+
+	if strings.HasSuffix(fileName, ".gz") {
+		gz, err := gzip.NewReader(file) // := shadows the file variable from the outer scope
+		if err != nil {
+			return "", err
+		}
+		defer gz.Close()
+		r = gz
 	}
+
 	w := sha1.New()
 
 	if _, err := io.Copy(w, r); err != nil {
